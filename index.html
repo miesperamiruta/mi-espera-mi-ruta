@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Mi espera, mi ruta</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script>tailwind.config={theme:{extend:{colors:{cream:'#FDF6BB',sky:'#BAE0FC',teal:'#367C91',sun:'#F9D97C',coral:'#F1A188',deep:'#2D6778',warm:'#FFFCF7'},fontFamily:{sans:['Nunito','Inter','system-ui','sans-serif']}}}}</script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.3.1/umd/react.production.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.3.1/umd/react-dom.production.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/htm@3.1.1/dist/htm.umd.js"></script>
+<style>
+:root{box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);color-scheme:light}
+body{background:#FFFCF7;color:#2D6778;font-family:Nunito,Inter,system-ui,sans-serif;margin:0}
+button{cursor:pointer}
+:focus-visible{outline:3px solid #367C91;outline-offset:2px}
+@keyframes pop{from{transform:scale(1.5) rotate(-18deg);opacity:0}to{transform:scale(1) rotate(-8deg);opacity:1}}
+.stamp{animation:pop .5s ease-out both}
+@keyframes up{from{transform:translateY(30px);opacity:0}to{transform:none;opacity:1}}
+.sheet{animation:up .25s ease-out}
+.dash{background-image:linear-gradient(#367C91 50%,transparent 0);background-size:3px 10px}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+const {useState}=React;const h=htm.bind(React.createElement);
+const P={home:'M3 11l9-8 9 8v10h-6v-6H9v6H3z',book:'M4 4h12a3 3 0 013 3v13H7a3 3 0 01-3-3zM8 4v13',bell:'M6 9a6 6 0 0112 0c0 6 2 7 2 7H4s2-1 2-7zM10 20h4',help:'M12 17v.01M9.5 9a2.5 2.5 0 115 0c0 2-2.5 2-2.5 4M12 2a10 10 0 100 20 10 10 0 000-20z',user:'M12 12a4 4 0 100-8 4 4 0 000 8zM4 21a8 8 0 0116 0',mail:'M3 6h18v12H3zM3 7l9 6 9-6',check:'M5 12l5 5 9-10',pin:'M12 22s7-6 7-12a7 7 0 10-14 0c0 6 7 12 7 12zM12 12a2 2 0 100-4 2 2 0 000 4z',send:'M4 12l16-8-6 16-3-7z',list:'M8 6h12M8 12h12M8 18h12M4 6h.01M4 12h.01M4 18h.01',clock:'M12 7v5l3 2M12 3a9 9 0 100 18 9 9 0 000-18z',cal:'M4 6h16v14H4zM4 10h16M8 3v4M16 3v4',x:'M6 6l12 12M18 6L6 18',down:'M6 9l6 6 6-6',eye:'M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12zM12 14a2 2 0 100-4 2 2 0 000 4z',flag:'M5 21V4h12l-2 4 2 4H5',alert:'M12 3l10 18H2zM12 10v5M12 18v.01',lock:'M6 11h12v10H6zM8 11V7a4 4 0 018 0v4'};
+const I=({n,c='w-6 h-6'})=>h`<svg className=${c} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d=${P[n]}/></svg>`;
+const Logo=({s=64})=>h`<svg width=${s} height=${s} viewBox="0 0 64 64" aria-hidden="true"><rect x="8" y="4" width="48" height="56" rx="10" fill="#367C91"/><rect x="14" y="10" width="36" height="44" rx="6" fill="#BAE0FC"/><path d="M20 44c8 0 6-14 14-14s6-10 10-10" stroke="#2D6778" strokeWidth="3" strokeDasharray="3 4" fill="none" strokeLinecap="round"/><circle cx="20" cy="44" r="4" fill="#F1A188"/><circle cx="44" cy="20" r="5" fill="#F9D97C" stroke="#2D6778" strokeWidth="2"/></svg>`;
+const Card=({c='',children,...r})=>h`<div className=${'bg-warm rounded-3xl shadow-md border border-sky/60 p-5 '+c} ...${r}>${children}</div>`;
+const Btn=({c='',v='p',children,...r})=>h`<button className=${'min-h-[52px] px-5 rounded-2xl font-bold text-base transition active:scale-[.98] '+(v==='p'?'bg-teal text-white shadow':v==='y'?'bg-sun text-deep':'bg-sky text-deep')+' '+c} ...${r}>${children}</button>`;
+
+const BASE=[
+{t:'Derivación realizada',ic:'send',st:'Derivado',d:'15 jul 2026',s:'Tu CESFAM de origen envió la solicitud de especialidad.',l:'Tu CESFAM de origen derivó a Martín para una consulta de otorrinolaringología. Este es el primer paso del recorrido.'},
+{t:'Solicitud recibida y registrada',ic:'list',st:'Registrado',d:'20 jul 2026',s:'El hospital registró la solicitud en su sistema.',l:'El hospital recibió la derivación y la registró. Desde aquí la solicitud queda disponible para su revisión clínica.'},
+{t:'En lista de espera',ic:'clock',st:'En espera',d:'',s:'Tu solicitud espera la asignación de una hora.',l:'Tu solicitud está registrada y se encuentra a la espera de asignación de una hora de especialidad. La programación depende de criterios clínicos y de la disponibilidad de atención.'},
+{t:'Hora asignada',ic:'cal',st:'Hora confirmada',d:'',s:'Se confirma el día y la hora de la consulta.',l:'Cuando el hospital asigne una hora, la verás aquí con el día, el lugar y las indicaciones para asistir. Hoy esta etapa aún no ocurre.'},
+{t:'Atención de especialidad',ic:'pin',st:'Atendido',d:'',s:'Consulta con el equipo de especialidad.',l:'Es la consulta con el especialista. Después de ella, el equipo indicará los pasos a seguir según cada caso.'}];
+const getStages=sc=>BASE.map((b,i)=>{let s=i<2?'done':i===2?'cur':'pend';let d=b.d;
+ if(sc===3){s=i<4?'done':'cur';if(i===3)d='28 ago 2026 · simulación';if(i===4)d='2 sep 2026, 10:30 · simulación'}
+ if(sc===3&&i===2)d='20 jul – 28 ago 2026 · simulación';
+ return{...b,s,d}});
+const NOT0=[
+{id:1,k:'req',ic:'check',t:'Tu solicitud fue registrada',b:'El hospital registró la derivación de Martín.',f:'20 jul 2026',r:true,go:'pass'},
+{id:2,k:'req',ic:'clock',t:'Tu solicitud continúa en lista de espera',b:'Sigue a la espera de asignación de una hora.',f:'3 ago 2026',r:false,go:'pass'},
+{id:3,k:'rec',ic:'user',t:'Recuerda mantener tus datos de contacto actualizados',b:'Así el hospital podrá ubicarte cuando haya novedades.',f:'4 ago 2026',r:false,go:'prof'},
+{id:4,k:'rec',ic:'alert',t:'Conoce qué hacer si cambia la condición del NNA',b:'Revisa la orientación disponible en Ayuda.',f:'5 ago 2026',r:false,go:'help'},
+{id:5,k:'rec',ic:'flag',t:'Consulta las etapas del proceso de atención',b:'Mira cada hito en tu pasaporte.',f:'6 ago 2026',r:true,go:'pass'}];
+const EXTRA=[
+{k:'req',ic:'bell',t:'Se ha registrado una actualización en tu solicitud',b:'Simulación: hay una novedad en el estado de la solicitud. Revisa tu pasaporte.',go:'pass'},
+{k:'req',ic:'cal',t:'Se asignó una hora de atención',b:'Simulación: se confirmó una hora ficticia. Revisa los detalles en tu pasaporte.',go:'pass'}];
+const FAQ=[
+['¿Por qué todavía no me llaman?','La asignación de horas depende de la urgencia clínica de cada caso y de los cupos disponibles. Que aún no te llamen no significa que tu solicitud se haya perdido: sigue registrada.'],
+['¿Qué significa seguir en lista de espera?','Significa que la solicitud está registrada y espera que se asigne una hora de especialidad. No es una señal de que algo esté mal.'],
+['¿Qué ocurre si cambio de número?','Es importante avisar. Si el hospital no puede contactarte, podrías perder la hora asignada. Pide orientación para actualizar tu teléfono y correo.'],
+['¿Qué hago si necesito más información?','Puedes revisar tu pasaporte, leer esta sección o redactar un correo a la profesional de contacto propuesta, más abajo.'],
+['¿Qué sucede después de la consulta de especialidad?','El especialista evaluará a Martín y te explicará los pasos siguientes. Pueden ser controles, exámenes o tratamiento, según cada caso.']];
+const MOT=['Consulta sobre estado de lista de espera','Cambio en la condición del NNA','Dudas sobre el proceso de atención','Otra consulta'];
+
+function Login({ok}){
+ const[r,sr]=useState('');const[p,sp]=useState('');const[v,sv]=useState(false);const[e,se]=useState({});
+ const go=()=>{const x={};const rr=r.replace(/[.\-\s]/g,'').toLowerCase();
+  if(!r.trim())x.r='Ingresa tu RUT.';else if(rr!=='123456785'&&!x.r&&r.trim())x.r2=1;
+  if(!p)x.p='Ingresa tu contraseña.';
+  if(!x.r&&!x.p){if(rr==='123456785'&&p==='Ruta2026!')return ok();x.g='RUT o contraseña incorrectos. Prueba con la cuenta de demostración.'}
+  delete x.r2;se(x)};
+ return h`<main className="min-h-screen bg-gradient-to-b from-sky/50 to-warm flex items-center justify-center p-5" style=${{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
+ <div className="w-full max-w-md">
+  <div className="text-center mb-6"><div className="inline-block"><${Logo} s=${84}/></div>
+   <h1 className="text-3xl font-extrabold mt-3">Mi espera, mi ruta</h1>
+   <p className="mt-1 text-lg">Tu recorrido de atención, en un solo lugar</p></div>
+  <${Card}>
+   <label className="block font-bold mb-1" htmlFor="rut">RUT</label>
+   <input id="rut" value=${r} onChange=${x=>sr(x.target.value)} placeholder="12.345.678-5" inputMode="text" className="w-full min-h-[52px] rounded-2xl border-2 border-sky px-4 bg-white text-deep"/>
+   ${e.r&&h`<p className="text-sm font-semibold mt-1" role="alert">⚠ ${e.r}</p>`}
+   <label className="block font-bold mt-4 mb-1" htmlFor="pw">Contraseña</label>
+   <div className="relative"><input id="pw" type=${v?'text':'password'} value=${p} onChange=${x=>sp(x.target.value)} onKeyDown=${x=>x.key==='Enter'&&go()} className="w-full min-h-[52px] rounded-2xl border-2 border-sky px-4 pr-14 bg-white text-deep"/>
+   <button type="button" onClick=${()=>sv(!v)} aria-label=${v?'Ocultar contraseña':'Mostrar contraseña'} className="absolute right-2 top-2 w-10 h-10 grid place-items-center rounded-xl"><${I} n="eye"/></button></div>
+   ${e.p&&h`<p className="text-sm font-semibold mt-1" role="alert">⚠ ${e.p}</p>`}
+   ${e.g&&h`<p className="text-sm font-semibold mt-3 bg-coral/30 rounded-xl p-3" role="alert">⚠ ${e.g}</p>`}
+   <${Btn} c="w-full mt-5" onClick=${go}>Ingresar<//>
+   <button className="block mx-auto mt-3 underline font-semibold" onClick=${()=>se({g:'En esta demostración no se puede recuperar la contraseña. Usa la cuenta de demostración.'})}>¿Olvidaste tu contraseña?</button>
+   <button className="block mx-auto mt-3 text-sm underline opacity-80" onClick=${()=>{sr('12.345.678-5');sp('Ruta2026!');se({})}}>Ingresar con cuenta de demostración</button>
+  <//>
+  <p className="text-xs text-center mt-5 px-4">Prototipo académico de Diseño de Servicios. Todos los datos son ficticios y no hay conexión con ningún hospital. Credenciales de prueba: 12.345.678-5 / Ruta2026!</p>
+ </div></main>`}
+
+const Stamp=({t,c='bg-sun'})=>h`<span className=${'stamp inline-block border-2 border-deep rounded-lg px-2 py-0.5 text-xs font-extrabold uppercase tracking-wide text-deep '+c}>${t}</span>`;
+const Head=({t,s})=>h`<header className="mb-5"><h1 className="text-2xl md:text-3xl font-extrabold">${t}</h1>${s&&h`<p className="mt-1 text-lg">${s}</p>`}</header>`;
+
+function Home({sc,go,setModal}){
+ const st=getStages(sc);const cur=st.find(x=>x.s==='cur');
+ const stat=sc===3?'Hora asignada (simulación)':'En lista de espera para consulta de especialidad';
+ return h`<div>
+ <${Head} t="¡Hola, Camila!" s="Aquí puedes acompañar el recorrido de atención de Martín."/>
+ <${Card} c="bg-gradient-to-br from-sky/60 to-warm">
+  <div className="flex items-center gap-3"><div className="w-12 h-12 rounded-2xl bg-teal text-white grid place-items-center"><${I} n="book"/></div>
+  <div><p className="font-extrabold text-lg">Martín Torres</p><p>Otorrinolaringología</p></div></div>
+  <dl className="mt-4 space-y-2 text-[15px]">
+   <div><dt className="font-bold inline">Estado: </dt><dd className="inline">${stat}</dd></div>
+   <div><dt className="font-bold inline">Fecha de derivación: </dt><dd className="inline">15 de julio de 2026</dd></div>
+   <div><dt className="font-bold inline">Última actualización: </dt><dd className="inline">${sc===3?'Hora asignada (simulación)':sc===2?'Novedad registrada (simulación)':'20 de julio de 2026 · solicitud registrada'}</dd></div></dl>
+  <${Btn} c="w-full mt-4" onClick=${()=>go('pass')}>Ver mi pasaporte<//>
+ <//>
+ <h2 className="font-extrabold text-xl mt-7 mb-3">Resumen del recorrido</h2>
+ <${Card}><ol className="flex items-start justify-between">
+  ${st.map((x,i)=>h`<li key=${i} className="flex-1 flex flex-col items-center text-center relative">
+   ${i>0&&h`<span className=${'absolute top-5 right-1/2 w-full h-1 '+(x.s==='pend'?'dash':'bg-teal')}></span>`}
+   <button onClick=${()=>setModal(x)} aria-label=${x.t+': '+(x.s==='done'?'completada':x.s==='cur'?'etapa actual':'pendiente')} className=${'relative z-10 w-10 h-10 rounded-full grid place-items-center border-2 border-deep '+(x.s==='done'?'bg-teal text-white':x.s==='cur'?'bg-sun ring-4 ring-sun/50':'bg-warm')}><${I} n=${x.s==='done'?'check':x.ic} c="w-5 h-5"/></button>
+   <span className="text-[11px] leading-tight mt-2 font-semibold px-0.5">${x.t}</span></li>`)}
+ </ol><p className="text-sm mt-3 text-center">Etapa actual: <b>${cur.t}</b></p><//>
+ <h2 className="font-extrabold text-xl mt-7 mb-3">Accesos rápidos</h2>
+ <div className="grid grid-cols-2 gap-3">
+  ${[['Mi pasaporte','book','pass','bg-sky'],['Mis novedades','bell','news','bg-cream'],['¿Qué hago si cambia su condición?','help','help','bg-coral/40'],['Contactar al hospital','mail','contact','bg-sun/60']].map(([t,ic,to,bg])=>h`
+  <button key=${t} onClick=${()=>go(to)} className=${bg+' rounded-3xl p-4 text-left min-h-[110px] shadow flex flex-col justify-between border border-deep/10'}><${I} n=${ic} c="w-7 h-7"/><span className="font-bold leading-snug">${t}</span></button>`)}
+ </div>
+ <p className="mt-6 bg-cream rounded-2xl p-4 text-[15px]">Aunque aún no tengas una fecha de atención, aquí puedes conocer el estado de tu solicitud y encontrar orientación sobre los próximos pasos.</p></div>`}
+
+function Passport({sc,setModal}){
+ const st=getStages(sc);const done=st.filter(x=>x.s==='done');
+ return h`<div>
+ <${Head} t="Mi pasaporte de atención" s="Conoce las etapas de tu recorrido."/>
+ <div className="rounded-3xl bg-teal text-white p-5 shadow-lg relative overflow-hidden">
+  <div className="absolute -right-6 -top-6 w-32 h-32 rounded-full border-8 border-white/15"></div>
+  <p className="text-xs uppercase tracking-widest opacity-90">Pasaporte de atención · Prototipo</p>
+  <p className="text-2xl font-extrabold mt-1">Martín Torres</p>
+  <p className="font-semibold">Otorrinolaringología</p>
+  <p className="mt-3 inline-block bg-sun text-deep font-bold rounded-full px-3 py-1 text-sm">${sc===3?'Hora asignada (simulación)':'En lista de espera'}</p></div>
+ ${sc>1&&h`<p className="mt-3 text-sm bg-cream rounded-xl p-3">🧪 Escenario de demostración: ${sc===3?'así se vería el pasaporte con una hora ficticia.':'hay una novedad simulada en Novedades.'}</p>`}
+ <ol className="mt-6 relative">
+  ${st.map((x,i)=>h`<li key=${i} className="flex gap-3 relative pb-5">
+   ${i<st.length-1&&h`<span className=${'absolute left-[23px] top-12 bottom-0 w-1 '+(x.s==='done'?'bg-teal':'dash')}></span>`}
+   <div className=${'z-10 shrink-0 w-12 h-12 rounded-full grid place-items-center border-2 border-deep '+(x.s==='done'?'bg-teal text-white':x.s==='cur'?'bg-sun ring-4 ring-sun/50':'bg-warm')}><${I} n=${x.ic}/></div>
+   <button onClick=${()=>setModal(x)} className=${'flex-1 text-left rounded-3xl p-4 shadow border-2 min-h-[88px] '+(x.s==='cur'?'bg-cream border-sun':x.s==='done'?'bg-sky/50 border-transparent':'bg-warm border-dashed border-sky')}>
+    <div className="flex justify-between items-start gap-2"><p className="font-extrabold leading-snug">${i+1}. ${x.t}</p>
+     ${x.s==='done'&&h`<${Stamp} t=${x.st}/>`}</div>
+    <p className="text-sm font-bold mt-1">${x.s==='done'?'✓ Completada':x.s==='cur'?'● Etapa actual':'○ Pendiente'}${x.d?' · '+x.d:''}</p>
+    <p className="text-sm mt-1">${x.s}</p>
+    <p className="text-xs underline mt-2">Toca para ver detalle</p></button></li>`)}
+ </ol>
+ <h2 className="font-extrabold text-xl mt-4 mb-3">Historial de mi solicitud</h2>
+ <${Card}><ul className="space-y-4">${[...done].reverse().map((x,i)=>h`<li key=${i} className="flex gap-3"><span className="w-3 h-3 rounded-full bg-teal mt-1.5 shrink-0"></span><div><p className="font-bold">${x.t}</p><p className="text-sm">${x.d}</p></div></li>`)}</ul>
+ <p className="text-xs mt-4">Solo se muestran hechos confirmados o simulados. No hay estimaciones de tiempo.</p><//></div>`}
+
+function News({sc,list,setList,go}){
+ const[f,sf]=useState('all');const[o,so]=useState(null);
+ const vis=list.filter(n=>f==='all'||n.k===f);
+ const rd=id=>setList(list.map(n=>n.id===id?{...n,r:true}:n));
+ return h`<div><${Head} t="Novedades" s="Tus avisos, ordenados del más reciente al más antiguo."/>
+ <div className="flex gap-2 flex-wrap mb-4" role="tablist">${[['all','Todas'],['req','Mi solicitud'],['rec','Orientación']].map(([k,t])=>h`<button key=${k} role="tab" aria-selected=${f===k} onClick=${()=>sf(k)} className=${'min-h-[44px] px-4 rounded-full font-bold border-2 border-deep '+(f===k?'bg-deep text-white':'bg-warm')}>${t}</button>`)}</div>
+ <div className="space-y-3">${vis.length===0&&h`<p>No hay novedades en esta categoría.</p>`}
+ ${vis.map(n=>h`<${Card} key=${n.id} c=${'!p-4 '+(n.r?'':'border-l-8 !border-l-coral')}>
+  <button className="w-full text-left" onClick=${()=>{so(o===n.id?null:n.id);rd(n.id)}}>
+   <div className="flex gap-3"><div className=${'w-11 h-11 rounded-2xl grid place-items-center shrink-0 '+(n.k==='req'?'bg-sky':'bg-cream')}><${I} n=${n.ic}/></div>
+   <div className="flex-1"><p className=${n.r?'font-semibold':'font-extrabold'}>${n.t}</p><p className="text-sm mt-0.5">${n.f} · ${n.k==='req'?'Mi solicitud':'Orientación'} · <b>${n.r?'Leída':'● No leída'}</b></p></div></div></button>
+  ${o===n.id&&h`<div className="mt-3 pt-3 border-t border-sky"><p className="text-[15px]">${n.b}</p>
+   <div className="flex gap-2 mt-3 flex-wrap"><${Btn} v="s" c="!min-h-[44px]" onClick=${()=>go(n.go)}>Ir a la sección<//>
+   ${!n.r&&h`<${Btn} v="s" c="!min-h-[44px]" onClick=${()=>rd(n.id)}>Marcar como leída<//>`}</div></div>`}<//>`)}</div>
+ <${Card} c="mt-6 !bg-cream border-dashed">
+  <p className="text-xs font-extrabold uppercase">🧪 Control de demostración</p>
+  <p className="text-sm my-2">Simula la llegada de una notificación ficticia. No proviene del hospital.</p>
+  <${Btn} v="y" c="!min-h-[44px]" onClick=${()=>{const e=EXTRA[sc===3?1:0];setList([{...e,id:Date.now(),f:'Hoy · simulación',r:false},...list])}}>Simular nueva notificación<//><//></div>`}
+
+function Acc({q,a}){const[o,so]=useState(false);return h`<div className="border-b border-sky"><button aria-expanded=${o} onClick=${()=>so(!o)} className="w-full flex justify-between items-center gap-3 text-left font-bold py-3 min-h-[52px]">${q}<span className=${'transition '+(o?'rotate-180':'')}><${I} n="down"/></span></button>${o&&h`<p className="pb-3 text-[15px]">${a}</p>`}</div>`}
+
+function Help({focus}){
+ const[open,so]=useState(focus==='contact'?'D2':focus==='help'?'B':null);const[m,sm]=useState(0);
+ const T=(id,ic,t,body)=>h`<${Card} c="mb-3 !p-0 overflow-hidden"><button aria-expanded=${open===id} onClick=${()=>so(open===id?null:id)} className="w-full flex items-center gap-3 p-4 text-left min-h-[64px]"><span className="w-11 h-11 rounded-2xl bg-sky grid place-items-center shrink-0"><${I} n=${ic}/></span><span className="flex-1 font-extrabold leading-snug">${t}</span><${I} n="down" c=${'w-6 h-6 transition '+(open===id?'rotate-180':'')}/></button>${open===id&&h`<div className="px-4 pb-4 text-[15px] space-y-2">${body}</div>`}<//>`;
+ const mail='mailto:lmedel@calvomackenna.cl?subject='+encodeURIComponent('Consulta de tutor/a: '+MOT[m])+'&body='+encodeURIComponent('Hola, Loreto:\n\nEscribo para realizar la siguiente consulta:\n\n[Escribe aquí tu consulta, sin datos clínicos]\n\nQuedo atenta a tu respuesta.\nSaludos cordiales.');
+ return h`<div><${Head} t="¿En qué podemos ayudarte?"/>
+ ${T('A','list','¿Cómo funciona la lista de espera?',h`<p><b>Derivación:</b> es cuando tu centro de salud pide una evaluación con un especialista.</p><p><b>Lista de espera:</b> tu solicitud queda registrada hasta que se asigne una hora.</p><p><b>Priorización:</b> en general, el equipo clínico ordena las solicitudes según criterios médicos, no solo por orden de llegada.</p><p><b>Cuando se asigna una hora:</b> el hospital te contacta con el día y el lugar.</p><p><b>¿Por qué no hay fecha estimada?</b> Porque depende de la disponibilidad y de otros casos; una fecha inventada podría confundirte.</p>`)}
+ ${T('B','alert','¿Qué hago si la condición de mi hijo cambió?',h`<p>Pueden existir procedimientos para presentar nuevos antecedentes clínicos y pedir que el equipo correspondiente los revise. Consulta en tu CESFAM o con la orientación del hospital.</p><p className="text-sm">Esta aplicación no cambia la prioridad clínica de ninguna solicitud.</p><p className="bg-coral/40 rounded-xl p-3 font-bold">⚠ Esta aplicación no reemplaza la atención médica. Ante síntomas de urgencia, acude a un servicio de urgencia.</p>`)}
+ ${T('C','help','¿Estoy esperando una consulta o una cirugía?',h`<div className="grid grid-cols-2 gap-2"><div className="bg-sky rounded-2xl p-3"><p className="font-extrabold">Consulta de especialidad</p><p className="text-sm mt-1">Una evaluación con el especialista, que decide qué hacer después.</p><p className="text-xs mt-2 font-bold">Es el caso de Martín</p></div><div className="bg-cream rounded-2xl p-3"><p className="font-extrabold">Lista quirúrgica</p><p className="text-sm mt-1">Espera para una operación ya indicada por el especialista.</p></div></div><p className="text-sm">Primero viene la consulta; la cirugía, si se necesita, se indica después.</p>`)}
+ ${T('D','user','¿Cómo actualizo mis datos?',h`<p>Mantener tu teléfono y correo al día evita que se pierda una llamada importante. Para cambiarlos, pide orientación en el CESFAM o escribe a la profesional de contacto.</p><p className="text-sm">En este prototipo puedes simular el cambio en Perfil; no se comunica al hospital.</p>`)}
+ <${Card} c="mb-3"><h2 className="font-extrabold mb-1">Preguntas frecuentes</h2>${FAQ.map(([q,a])=>h`<${Acc} key=${q} q=${q} a=${a}/>`)}<//>
+ <${Card} c="!bg-sun/50" id="contact"><h2 className="font-extrabold text-xl">¿Necesitas orientación personalizada?</h2>
+  <p className="mt-2 font-bold">Loreto Medel</p><p className="break-all">lmedel@calvomackenna.cl</p>
+  <p className="text-sm mt-2">Sirve para consultas generales sobre el proceso. No es un canal de emergencia ni se garantizan tiempos de respuesta.</p>
+  <fieldset className="mt-3"><legend className="font-bold mb-1">Motivo de tu consulta</legend>
+  ${MOT.map((x,i)=>h`<label key=${i} className="flex items-center gap-3 min-h-[44px]"><input type="radio" name="mot" checked=${m===i} onChange=${()=>sm(i)} className="w-5 h-5 accent-teal"/>${x}</label>`)}</fieldset>
+  <a href=${mail} className="mt-3 flex items-center justify-center gap-2 min-h-[52px] rounded-2xl bg-teal text-white font-bold"><${I} n="mail"/>Redactar correo</a>
+  <p className="text-xs mt-3 flex gap-2"><${I} n="lock" c="w-4 h-4 shrink-0"/>No incluyas datos clínicos de Martín en el correo. Se abrirá tu app de correo y nada se envía automáticamente.</p>
+  <p className="text-xs mt-2 opacity-80">Contacto propuesto en el marco de un proyecto académico; su habilitación pública está pendiente de autorización institucional.</p><//></div>`}
+
+function Profile({sc,setSc,out,showToast}){
+ const[ed,se]=useState(false);const[tel,st]=useState('+56 9 0000 0000');const[mail,sm]=useState('camila.ejemplo@example.com');
+ const[nt,sn]=useState({a:true,b:true});const[demo,sd]=useState(false);const[pv,sp]=useState(false);
+ const Row=(a,b)=>h`<div className="py-2 border-b border-sky/70"><p className="text-xs font-bold uppercase opacity-80">${a}</p><p className="font-semibold break-all">${b}</p></div>`;
+ const Tg=(k,t)=>h`<label className="flex justify-between items-center min-h-[48px] gap-3">${t}<input type="checkbox" checked=${nt[k]} onChange=${()=>sn({...nt,[k]:!nt[k]})} className="w-6 h-6 accent-teal"/></label>`;
+ return h`<div><${Head} t="Mi perfil"/>
+ <${Card} c="mb-4"><div className="flex justify-between items-center mb-1"><h2 className="font-extrabold text-lg">Datos de la tutora</h2><button className="underline font-bold min-h-[44px]" onClick=${()=>{if(ed)showToast('Cambio guardado solo en la demostración. No fue comunicado al hospital.');se(!ed)}}>${ed?'Guardar':'Actualizar mis datos'}</button></div>
+  ${Row('Nombre','Camila Torres')}${Row('RUT','12.345.***-*')}${Row('Relación con el NNA','Madre y tutora')}
+  ${ed?h`<div className="py-2 space-y-2"><label className="block text-sm font-bold">Correo<input value=${mail} onChange=${e=>sm(e.target.value)} className="block w-full min-h-[48px] rounded-xl border-2 border-sky px-3 bg-white"/></label><label className="block text-sm font-bold">Teléfono<input value=${tel} onChange=${e=>st(e.target.value)} className="block w-full min-h-[48px] rounded-xl border-2 border-sky px-3 bg-white"/></label></div>`:h`${Row('Correo',mail)}${Row('Teléfono',tel)}`}<//>
+ <${Card} c="mb-4"><h2 className="font-extrabold text-lg mb-1">NNA asociado</h2>${Row('Nombre','Martín Torres')}${Row('Edad','7 años')}${Row('Especialidad','Otorrinolaringología')}${Row('Estado de solicitud',sc===3?'Hora asignada (simulación)':'En lista de espera')}<//>
+ <${Card} c="mb-4"><h2 className="font-extrabold text-lg">Configuración</h2>
+  ${Tg('a','Avisos sobre mi solicitud')}${Tg('b','Recordatorios y orientación')}
+  <button className="w-full text-left font-bold min-h-[48px]" onClick=${()=>sp(!pv)}>Información de privacidad ${pv?'▲':'▼'}</button>
+  ${pv&&h`<p className="text-sm pb-2">Este prototipo usa solo datos ficticios guardados en la memoria de la página. No almacena contraseñas ni información clínica, y no se conecta con el hospital.</p>`}
+  <button className="w-full text-left font-bold min-h-[48px]" onClick=${()=>sd(!demo)}>Modo demostración ${demo?'▲':'▼'}</button>
+  ${demo&&h`<div className="bg-cream rounded-2xl p-3 space-y-2"><p className="text-sm font-bold">🧪 Escenarios simulados</p>${[[1,'1. En lista de espera'],[2,'2. Nueva actualización'],[3,'3. Hora asignada']].map(([n,t])=>h`<button key=${n} onClick=${()=>setSc(n)} className=${'w-full min-h-[48px] rounded-xl font-bold border-2 border-deep '+(sc===n?'bg-deep text-white':'bg-warm')}>${t}</button>`)}</div>`}<//>
+ <${Btn} v="s" c="w-full" onClick=${out}>Cerrar sesión<//></div>`}
+
+function App(){
+ const[ok,sok]=useState(false);const[tab,st]=useState('home');const[sc,ssc]=useState(1);const[list,sl]=useState(NOT0);
+ const[modal,sm]=useState(null);const[toast,stt]=useState('');const[foc,sf]=useState('');
+ const showToast=t=>{stt(t);setTimeout(()=>stt(''),3500)};
+ const setSc=n=>{ssc(n);const base=NOT0.filter(x=>true);let l=[...base];
+  if(n>=2)l=[{...EXTRA[0],id:101,f:'Hoy · simulación',r:false},...l];
+  if(n===3)l=[{...EXTRA[1],id:102,f:'Hoy · simulación',r:false},...l];
+  sl(l);showToast('Escenario '+n+' activado (simulación).')};
+ const go=t=>{if(t==='contact'){sf('contact');st('help')}else{sf(t==='help'?'help':'');st(t)}window.scrollTo(0,0)};
+ if(!ok)return h`<${Login} ok=${()=>sok(true)}/>`;
+ const unread=list.filter(n=>!n.r).length;
+ const nav=[['home','Inicio','home'],['pass','Mi pasaporte','book'],['news','Novedades','bell'],['help','Ayuda','help'],['prof','Perfil','user']];
+ return h`<div className="md:flex min-h-screen">
+ <nav aria-label="Principal" className="fixed bottom-0 inset-x-0 z-30 bg-warm border-t-2 border-sky flex md:static md:w-60 md:flex-col md:border-t-0 md:border-r-2 md:h-screen md:sticky md:top-0 md:p-4 md:gap-2" style=${{paddingBottom:'env(safe-area-inset-bottom,0px)'}}>
+  <div className="hidden md:flex items-center gap-2 mb-4"><${Logo} s=${40}/><span className="font-extrabold leading-tight">Mi espera,<br/>mi ruta</span></div>
+  ${nav.map(([k,t,ic])=>h`<button key=${k} aria-current=${tab===k?'page':undefined} onClick=${()=>go(k)} className=${'flex-1 relative flex flex-col md:flex-row items-center justify-center md:justify-start gap-1 md:gap-3 min-h-[64px] md:min-h-[52px] md:px-3 md:rounded-2xl text-[11px] md:text-base font-bold '+(tab===k?'text-deep bg-sky':'text-teal')}>
+   <${I} n=${ic}/><span>${t}</span>${tab===k&&h`<span className="md:hidden absolute top-0 w-10 h-1 rounded bg-deep"></span>`}
+   ${k==='news'&&unread>0&&h`<span aria-label=${unread+' sin leer'} className="absolute top-1 right-[22%] md:static md:ml-auto min-w-[20px] h-5 px-1 rounded-full bg-coral text-deep text-xs font-extrabold grid place-items-center">${unread}</span>`}</button>`)}
+ </nav>
+ <main className="flex-1 w-full max-w-2xl mx-auto px-4 pt-5 pb-28 md:pb-10">
+  ${tab==='home'&&h`<${Home} sc=${sc} go=${go} setModal=${sm}/>`}
+  ${tab==='pass'&&h`<${Passport} sc=${sc} setModal=${sm}/>`}
+  ${tab==='news'&&h`<${News} sc=${sc} list=${list} setList=${sl} go=${go}/>`}
+  ${tab==='help'&&h`<${Help} key=${foc} focus=${foc}/>`}
+  ${tab==='prof'&&h`<${Profile} sc=${sc} setSc=${setSc} out=${()=>{sok(false);st('home')}} showToast=${showToast}/>`}
+  <p className="text-xs text-center mt-8 opacity-80">Prototipo académico · datos ficticios y simulados</p>
+ </main>
+ ${modal&&h`<div className="fixed inset-0 z-40 bg-deep/50 flex items-end md:items-center justify-center" onClick=${()=>sm(null)} role="dialog" aria-modal="true" aria-label=${modal.t}>
+  <div className="sheet bg-warm rounded-t-3xl md:rounded-3xl w-full max-w-md p-6 shadow-2xl" style=${{paddingBottom:'calc(1.5rem + env(safe-area-inset-bottom,0px))'}} onClick=${e=>e.stopPropagation()}>
+   <div className="flex justify-between items-start"><div className="w-12 h-12 rounded-2xl bg-sky grid place-items-center"><${I} n=${modal.ic}/></div><button aria-label="Cerrar" onClick=${()=>sm(null)} className="w-11 h-11 grid place-items-center"><${I} n="x"/></button></div>
+   <h2 className="text-xl font-extrabold mt-3">${modal.t}</h2>
+   <p className="font-bold mt-1">${modal.s==='done'?'✓ Completada':modal.s==='cur'?'● Etapa actual':'○ Pendiente'}${modal.d?' · '+modal.d:''}</p>
+   ${modal.s==='done'&&h`<div className="mt-2"><${Stamp} t=${modal.st}/></div>`}
+   <p className="mt-3 text-[15px]">${modal.l}</p>
+   <${Btn} c="w-full mt-5" onClick=${()=>sm(null)}>Entendido<//></div></div>`}
+ ${toast&&h`<div role="status" className="fixed z-50 left-4 right-4 bottom-24 md:bottom-6 md:left-auto md:max-w-sm bg-deep text-white rounded-2xl p-4 shadow-xl font-semibold">${toast}</div>`}
+ </div>`}
+ReactDOM.createRoot(document.getElementById('root')).render(h`<${App}/>`);
+</script>
+</body>
+</html>
